@@ -1,0 +1,285 @@
+{
+  "name": "Low Stock Alert Demo",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "bf03eeb6-e576-4d7a-b8d8-a310b54e16a6",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1WqeunYj2eRknvVos2Iw_37In6cKVuYIXI8EYq3gNHAk",
+          "mode": "list",
+          "cachedResultName": "Reorder Demo",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1WqeunYj2eRknvVos2Iw_37In6cKVuYIXI8EYq3gNHAk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1150886279,
+          "mode": "list",
+          "cachedResultName": "Stock",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1WqeunYj2eRknvVos2Iw_37In6cKVuYIXI8EYq3gNHAk/edit#gid=1150886279"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        208,
+        0
+      ],
+      "id": "390526ab-4fb1-4bee-b5a9-deca8c9a34aa",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "kGdi7kriSpBJ95LO",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "7e6a8546-3b0e-43d7-bbec-156ab8d8ec09",
+              "leftValue": "={{ Number($json.stock_left) }}",
+              "rightValue": "={{ Number($json.reorder_level) }}",
+              "operator": {
+                "type": "number",
+                "operation": "lte"
+              }
+            },
+            {
+              "id": "ba155b99-bf61-45ce-bdbe-3bb8008eee61",
+              "leftValue": "={{ $json.alert_status ?? '' }}",
+              "rightValue": "reordered yet",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        416,
+        0
+      ],
+      "id": "335af7b8-5e1f-4637-906f-cecdbc9f4820",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "sendTo": "=ktawheed93@gmail.com",
+        "subject": "=Low stock: {{ $json.product }}",
+        "message": "=Hi, {{ $json.product }} is down to {{ $json.stock_left }} bags. Your restock level is {{ $json.reorder_level }}. Time to order more.",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        624,
+        -96
+      ],
+      "id": "4d9e8b92-963c-45f8-a766-640fe9b3074d",
+      "name": "Send a message",
+      "webhookId": "1e9bd05b-ea56-4b2c-af44-d83f3256bc28",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "kgyLCtBlSTAEYy6a",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1WqeunYj2eRknvVos2Iw_37In6cKVuYIXI8EYq3gNHAk",
+          "mode": "list",
+          "cachedResultName": "Reorder Demo",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1WqeunYj2eRknvVos2Iw_37In6cKVuYIXI8EYq3gNHAk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1150886279,
+          "mode": "list",
+          "cachedResultName": "Stock",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1WqeunYj2eRknvVos2Iw_37In6cKVuYIXI8EYq3gNHAk/edit#gid=1150886279"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "alert_status": "=alert sent on {{ $now.toFormat('d MMM') }}",
+            "row_number": "={{ $('Get row(s) in sheet').item.json.row_number }}"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "product",
+              "displayName": "product",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "stock_left",
+              "displayName": "stock_left",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "reorder_level",
+              "displayName": "reorder_level",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "alert_status",
+              "displayName": "alert_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        832,
+        -96
+      ],
+      "id": "0a6454e4-b67f-447b-b698-9dcaa427d96f",
+      "name": "Update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "kGdi7kriSpBJ95LO",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "8c7739a5-ed9b-4615-b06d-bd11776ba251",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5d4a9859878989fa120becffb601e43b26bab7c3cec6216dbbc13c1237b8d2b7"
+  },
+  "id": "dL0WpJD5KHCRsOY3",
+  "tags": []
+}
